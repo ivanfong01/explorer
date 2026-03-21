@@ -1,5 +1,13 @@
 import {ContentCopy, OpenInFull} from "@mui/icons-material";
-import {Box, Button, Modal, Stack, Typography, useTheme} from "@mui/material";
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Modal,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import {Suspense, useEffect, useRef, useState} from "react";
 import {
   CodeLoadingFallback,
@@ -9,6 +17,10 @@ import {
 import StyledTooltip, {
   StyledLearnMoreTooltip,
 } from "../../../components/StyledTooltip";
+import {
+  type DecompilationView,
+  getDecompiledCodeView,
+} from "../../../utils/moveDecompiler";
 import {getSemanticColors} from "../../../themes/colors/aptosBrandColors";
 import {getPublicFunctionLineNumber, transformCode} from "../../../utils";
 import {useLogEventWithBasic} from "../hooks/useLogEventWithBasic";
@@ -24,7 +36,23 @@ function useStartingLineNumber(sourceCode?: string) {
   return getPublicFunctionLineNumber(sourceCode, functionToHighlight);
 }
 
-function ExpandCode({sourceCode}: {sourceCode: string | undefined}) {
+type CodeView =
+  | "published-source"
+  | "decompiled-source"
+  | "bytecode-disassembly";
+
+type BytecodeViewState = {
+  bytecodeKey: string;
+  code: string;
+};
+
+function ExpandCode({
+  codeToDisplay,
+  startingLineNumber,
+}: {
+  codeToDisplay: string | undefined;
+  startingLineNumber: number;
+}) {
   const theme = useTheme();
   const semanticColors = getSemanticColors(theme.palette.mode);
   const {selectedModuleName} = useModulesPathParams();
@@ -41,22 +69,25 @@ function ExpandCode({sourceCode}: {sourceCode: string | undefined}) {
     setIsModalOpen(false);
   };
 
-  const startingLineNumber = useStartingLineNumber(sourceCode);
   const codeBoxScrollRef = useRef<{scrollTop: number} | null>(null);
   const LINE_HEIGHT_IN_PX = 24;
   useEffect(() => {
+    if (!isModalOpen) {
+      return;
+    }
+
     if (codeBoxScrollRef.current) {
       codeBoxScrollRef.current.scrollTop =
         LINE_HEIGHT_IN_PX * startingLineNumber;
     }
-  });
+  }, [isModalOpen, startingLineNumber]);
 
   return (
     <Box>
       <Button
         variant="outlined"
         onClick={handleOpenModal}
-        disabled={!sourceCode}
+        disabled={!codeToDisplay}
         sx={{
           height: "2rem",
           width: "2rem",
@@ -96,7 +127,7 @@ function ExpandCode({sourceCode}: {sourceCode: string | undefined}) {
                 }}
                 showLineNumbers
               >
-                {sourceCode ?? ""}
+                {codeToDisplay ?? ""}
               </SyntaxHighlighter>
             )}
           </Suspense>
@@ -106,30 +137,154 @@ function ExpandCode({sourceCode}: {sourceCode: string | undefined}) {
   );
 }
 
-export function Code({bytecode}: {bytecode: string}) {
+export function Code({
+  sourceBytecode,
+  moduleBytecode,
+}: {
+  sourceBytecode?: string;
+  moduleBytecode?: string;
+}) {
   const {selectedModuleName} = useModulesPathParams();
   const logEvent = useLogEventWithBasic();
   const styles = useHighlighterStyles();
 
   const TOOLTIP_TIME = 2000; // 2s
 
-  const sourceCode = bytecode === "0x" ? undefined : transformCode(bytecode);
+  const publishedSourceCode =
+    sourceBytecode && sourceBytecode !== "0x"
+      ? transformCode(sourceBytecode)
+      : undefined;
+  const hasPublishedSourceCode = !!publishedSourceCode;
+  const hasModuleBytecode =
+    typeof moduleBytecode === "string" && moduleBytecode !== "0x";
 
   const theme = useTheme();
   const semanticColors = getSemanticColors(theme.palette.mode);
   const [tooltipOpen, setTooltipOpen] = useState<boolean>(false);
+  const [activeView, setActiveView] = useState<CodeView>(() =>
+    hasPublishedSourceCode ? "published-source" : "decompiled-source",
+  );
+  const [decompiledSource, setDecompiledSource] = useState<BytecodeViewState>();
+  const [bytecodeDisassembly, setBytecodeDisassembly] =
+    useState<BytecodeViewState>();
+  const [decompilationError, setDecompilationError] = useState<string>();
+  const [isDecompiling, setIsDecompiling] = useState(false);
+  const moduleBytecodeKey = moduleBytecode?.toLowerCase();
+
+  useEffect(() => {
+    if (!hasPublishedSourceCode && hasModuleBytecode) {
+      setActiveView("decompiled-source");
+    }
+  }, [hasPublishedSourceCode, hasModuleBytecode]);
+
+  useEffect(() => {
+    const missingActiveViewCode =
+      activeView === "decompiled-source"
+        ? !decompiledSource ||
+          decompiledSource.bytecodeKey !== moduleBytecodeKey
+        : activeView === "bytecode-disassembly"
+          ? !bytecodeDisassembly ||
+            bytecodeDisassembly.bytecodeKey !== moduleBytecodeKey
+          : false;
+
+    if (
+      !hasModuleBytecode ||
+      !moduleBytecodeKey ||
+      activeView === "published-source" ||
+      !missingActiveViewCode
+    ) {
+      return;
+    }
+
+    const currentModuleBytecodeKey = moduleBytecodeKey;
+    let cancelled = false;
+
+    async function runDecompilation() {
+      setIsDecompiling(true);
+      setDecompilationError(undefined);
+
+      try {
+        const decompilationView: DecompilationView =
+          activeView === "decompiled-source"
+            ? "decompiled-source"
+            : "bytecode-disassembly";
+
+        // Let loading UI render before running CPU-intensive WASM work.
+        await new Promise((resolve) => setTimeout(resolve, 0));
+        const result = await getDecompiledCodeView(
+          currentModuleBytecodeKey,
+          decompilationView,
+        );
+        if (!cancelled) {
+          if (decompilationView === "decompiled-source") {
+            setDecompiledSource({
+              bytecodeKey: currentModuleBytecodeKey,
+              code: result,
+            });
+          } else {
+            setBytecodeDisassembly({
+              bytecodeKey: currentModuleBytecodeKey,
+              code: result,
+            });
+          }
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setDecompilationError(
+            error instanceof Error
+              ? error.message
+              : "Failed to decompile module",
+          );
+        }
+      } finally {
+        if (!cancelled) {
+          setIsDecompiling(false);
+        }
+      }
+    }
+
+    runDecompilation();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    activeView,
+    bytecodeDisassembly,
+    decompiledSource,
+    hasModuleBytecode,
+    moduleBytecodeKey,
+  ]);
+
+  let displayedCode: string | undefined;
+  if (activeView === "published-source") {
+    displayedCode = publishedSourceCode;
+  } else if (activeView === "decompiled-source") {
+    displayedCode =
+      decompiledSource?.bytecodeKey === moduleBytecodeKey
+        ? decompiledSource?.code
+        : undefined;
+  } else {
+    displayedCode =
+      bytecodeDisassembly?.bytecodeKey === moduleBytecodeKey
+        ? bytecodeDisassembly?.code
+        : undefined;
+  }
+
+  const startingLineNumber = useStartingLineNumber(
+    activeView === "published-source" ? displayedCode : undefined,
+  );
 
   async function copyCode() {
-    if (!sourceCode) return;
+    if (!displayedCode) return;
+    if (typeof window === "undefined") return; // Skip during SSR
 
-    await navigator.clipboard.writeText(sourceCode);
+    await navigator.clipboard.writeText(displayedCode);
     setTooltipOpen(true);
     setTimeout(() => {
       setTooltipOpen(false);
     }, TOOLTIP_TIME);
   }
 
-  const startingLineNumber = useStartingLineNumber(sourceCode);
   const codeBoxScrollRef = useRef<{scrollTop: number} | null>(null);
   const LINE_HEIGHT_IN_PX = 24;
   useEffect(() => {
@@ -137,7 +292,7 @@ export function Code({bytecode}: {bytecode: string}) {
       codeBoxScrollRef.current.scrollTop =
         LINE_HEIGHT_IN_PX * startingLineNumber;
     }
-  });
+  }, [startingLineNumber]);
 
   return (
     <Box>
@@ -157,9 +312,9 @@ export function Code({bytecode}: {bytecode: string}) {
           <Typography fontSize={20} fontWeight={700}>
             Code
           </Typography>
-          <StyledLearnMoreTooltip text="Please be aware that this code was provided by the owner and it could be different to the real code on blockchain. We cannot verify it." />
+          <StyledLearnMoreTooltip text="Published source can differ from on-chain bytecode. Decompiled output is generated directly from on-chain bytecode with the Move decompiler WASM." />
         </Stack>
-        {sourceCode && (
+        {displayedCode && (
           <Stack direction="row" spacing={2}>
             <StyledTooltip
               title="Code copied"
@@ -175,7 +330,7 @@ export function Code({bytecode}: {bytecode: string}) {
                   logEvent("copy_code_button_clicked", selectedModuleName);
                   copyCode();
                 }}
-                disabled={!sourceCode}
+                disabled={!displayedCode}
                 sx={{
                   display: "flex",
                   alignItems: "center",
@@ -195,11 +350,49 @@ export function Code({bytecode}: {bytecode: string}) {
                 </Typography>
               </Button>
             </StyledTooltip>
-            <ExpandCode sourceCode={sourceCode} />
+            <ExpandCode
+              codeToDisplay={displayedCode}
+              startingLineNumber={startingLineNumber}
+            />
           </Stack>
         )}
       </Stack>
-      {sourceCode && (
+      <Stack direction="row" spacing={1} marginBottom={2}>
+        {hasPublishedSourceCode && (
+          <Button
+            size="small"
+            variant={
+              activeView === "published-source" ? "contained" : "outlined"
+            }
+            onClick={() => setActiveView("published-source")}
+          >
+            Published Source
+          </Button>
+        )}
+        {hasModuleBytecode && (
+          <>
+            <Button
+              size="small"
+              variant={
+                activeView === "decompiled-source" ? "contained" : "outlined"
+              }
+              onClick={() => setActiveView("decompiled-source")}
+            >
+              Decompiled
+            </Button>
+            <Button
+              size="small"
+              variant={
+                activeView === "bytecode-disassembly" ? "contained" : "outlined"
+              }
+              onClick={() => setActiveView("bytecode-disassembly")}
+            >
+              Disassembly
+            </Button>
+          </>
+        )}
+      </Stack>
+      {activeView === "published-source" && displayedCode && (
         <Typography
           variant="body1"
           fontSize={14}
@@ -211,10 +404,39 @@ export function Code({bytecode}: {bytecode: string}) {
           different from the actual bytecode.
         </Typography>
       )}
-      {!sourceCode ? (
+      {activeView !== "published-source" && (
+        <Typography
+          variant="body1"
+          fontSize={14}
+          fontWeight={400}
+          marginBottom={"16px"}
+          color={theme.palette.text.secondary}
+        >
+          This view is generated from on-chain bytecode using the Move
+          decompiler WASM.
+        </Typography>
+      )}
+      {!hasPublishedSourceCode && !hasModuleBytecode ? (
         <Box>
-          Unfortunately, the source code cannot be shown because the package
-          publisher has chosen not to make it available
+          This module does not expose published source or bytecode for
+          decompilation.
+        </Box>
+      ) : activeView !== "published-source" && isDecompiling ? (
+        <Stack direction="row" spacing={1.5} alignItems="center" py={2}>
+          <CircularProgress size={18} />
+          <Typography variant="body2" color="text.secondary">
+            Decompiling module bytecode...
+          </Typography>
+        </Stack>
+      ) : activeView !== "published-source" && decompilationError ? (
+        <Box color={theme.palette.error.main}>
+          Failed to decompile module bytecode: {decompilationError}
+        </Box>
+      ) : !displayedCode ? (
+        <Box>
+          {activeView === "published-source"
+            ? "Published source is not available for this module."
+            : "Module bytecode is not available for decompilation."}
         </Box>
       ) : (
         <Box
@@ -239,7 +461,7 @@ export function Code({bytecode}: {bytecode: string}) {
                 customStyle={{margin: 0, backgroundColor: "unset"}}
                 showLineNumbers
               >
-                {sourceCode}
+                {displayedCode}
               </SyntaxHighlighter>
             )}
           </Suspense>

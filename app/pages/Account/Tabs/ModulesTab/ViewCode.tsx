@@ -37,7 +37,8 @@ interface ModuleSidebarProps {
 interface ModuleContentProps {
   address: string;
   moduleName: string;
-  bytecode: string;
+  sourceBytecode: string;
+  ledgerVersion?: number;
 }
 
 function ViewCode({
@@ -111,7 +112,7 @@ function ViewCode({
           <ModuleContent
             address={address}
             moduleName={selectedModuleName}
-            bytecode={selectedModule.source}
+            sourceBytecode={selectedModule.source}
             ledgerVersion={ledgerVersion}
           />
         )}
@@ -197,10 +198,15 @@ function ModuleSidebar({
 function ModuleContent({
   address,
   moduleName,
-  bytecode,
+  sourceBytecode,
   ledgerVersion,
-}: ModuleContentProps & {ledgerVersion?: number}) {
+}: ModuleContentProps) {
   const theme = useTheme();
+  const {data: moduleBytecodeResponse} = useGetAccountModule(
+    address,
+    moduleName,
+    ledgerVersion,
+  );
   return (
     <Stack
       direction="column"
@@ -215,7 +221,10 @@ function ModuleContent({
         ledgerVersion={ledgerVersion}
       />
       <Divider />
-      <Code bytecode={bytecode} />
+      <Code
+        sourceBytecode={sourceBytecode}
+        moduleBytecode={moduleBytecodeResponse?.bytecode}
+      />
       <Divider />
       <ABI
         address={address}
