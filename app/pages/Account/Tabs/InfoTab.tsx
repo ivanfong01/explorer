@@ -1,5 +1,13 @@
-import {Box, useTheme} from "@mui/material";
+import {
+  Box,
+  Chip,
+  CircularProgress,
+  Link,
+  Typography,
+  useTheme,
+} from "@mui/material";
 import type {Types} from "~/types/aptos";
+import {useGetObjectRefs} from "../../../api/hooks/useGetObjectRefs";
 import HashButton, {HashType} from "../../../components/HashButton";
 import ContentBox from "../../../components/IndividualPageContent/ContentBox";
 import ContentRow from "../../../components/IndividualPageContent/ContentRow";
@@ -13,12 +21,30 @@ type InfoTabProps = {
   objectData: Types.MoveResource | undefined;
 };
 
+function RefChip({label, exists}: {label: string; exists: boolean}) {
+  return (
+    <Chip
+      label={label}
+      size="small"
+      color={exists ? "success" : "default"}
+      variant={exists ? "filled" : "outlined"}
+      sx={{fontWeight: 500}}
+    />
+  );
+}
+
 export default function InfoTab({
   address,
   accountData,
   objectData,
 }: InfoTabProps) {
   const theme = useTheme();
+  const {
+    data: objectRefs,
+    isLoading: refsLoading,
+    error: refsError,
+  } = useGetObjectRefs(address, {enabled: !!objectData});
+
   if (!accountData && !objectData) {
     return <EmptyTabContent />;
   }
@@ -88,10 +114,97 @@ export default function InfoTab({
     );
   }
 
+  let objectRefsInfo = null;
+  if (objectData) {
+    objectRefsInfo = (
+      <Box marginBottom={3}>
+        <Typography
+          variant="subtitle1"
+          fontWeight={600}
+          sx={{mb: 1, color: theme.palette.text.primary}}
+        >
+          Object Capabilities
+        </Typography>
+        <ContentBox>
+          {refsLoading ? (
+            <Box display="flex" alignItems="center" gap={1}>
+              <CircularProgress size={16} />
+              <Typography variant="body2" color="text.secondary">
+                Scanning creation transaction...
+              </Typography>
+            </Box>
+          ) : objectRefs ? (
+            <>
+              <ContentRow
+                title={"Transfer Ref:"}
+                value={
+                  <RefChip
+                    label={objectRefs.hasTransferRef ? "Exists" : "Not Created"}
+                    exists={objectRefs.hasTransferRef}
+                  />
+                }
+                tooltip={getLearnMoreTooltip("transfer_ref")}
+              />
+              <ContentRow
+                title={"Delete Ref:"}
+                value={
+                  <RefChip
+                    label={objectRefs.hasDeleteRef ? "Exists" : "Not Created"}
+                    exists={objectRefs.hasDeleteRef}
+                  />
+                }
+                tooltip={getLearnMoreTooltip("delete_ref")}
+              />
+              <ContentRow
+                title={"Extend Ref:"}
+                value={
+                  <RefChip
+                    label={objectRefs.hasExtendRef ? "Exists" : "Not Created"}
+                    exists={objectRefs.hasExtendRef}
+                  />
+                }
+                tooltip={getLearnMoreTooltip("extend_ref")}
+              />
+              {objectRefs.creationTransactionVersion !== null && (
+                <ContentRow
+                  title={"Creation Transaction:"}
+                  value={
+                    <HashButton
+                      hash={String(objectRefs.creationTransactionVersion)}
+                      type={HashType.TRANSACTION}
+                    />
+                  }
+                  tooltip={getLearnMoreTooltip("creation_transaction")}
+                />
+              )}
+            </>
+          ) : refsError ? (
+            <Typography variant="body2" color="error">
+              Failed to load object capabilities.{" "}
+              <Link
+                component="button"
+                variant="body2"
+                onClick={() => window.location.reload()}
+                sx={{verticalAlign: "baseline"}}
+              >
+                Retry
+              </Link>
+            </Typography>
+          ) : (
+            <Typography variant="body2" color="text.secondary">
+              Unable to determine object capabilities
+            </Typography>
+          )}
+        </ContentBox>
+      </Box>
+    );
+  }
+
   return (
     <>
       {accountInfo}
       {objectInfo}
+      {objectRefsInfo}
     </>
   );
 }
