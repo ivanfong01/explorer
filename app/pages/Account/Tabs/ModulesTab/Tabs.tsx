@@ -144,23 +144,6 @@ function ModulesTabs({
 
   const {data: publishHistory} = useGetModulePublishHistory(address);
 
-  const handleVersionChange = (version: number | undefined) => {
-    setLedgerVersion(version);
-    if (version !== undefined && (value === "run" || value === "view")) {
-      const path = `/${accountPagePath(isObject)}/${address}/modules/code`;
-      navigate({to: path, replace: true});
-    }
-  };
-
-  const handleDiffModeToggle = () => {
-    if (!diffMode && publishHistory && publishHistory.length >= 2) {
-      setDiffBaseVersion(publishHistory[1].version);
-      setDiffCompareVersion(undefined);
-      setLedgerVersion(undefined);
-    }
-    setDiffMode(!diffMode);
-  };
-
   // Parse path params from splat route
   const {modulesTab, selectedModuleName, selectedFnName} =
     useModulesPathParams();
@@ -170,6 +153,50 @@ function ModulesTabs({
   const sortedPackages = useGetAccountPackages(address, ledgerVersion);
   const value =
     modulesTab === undefined ? tabValues[0] : (modulesTab as TabValue);
+
+  const resolveModuleNameForCodeTab = (): string => {
+    if (value !== "packages" && selectedModuleName) {
+      return selectedModuleName;
+    }
+    if (value === "packages" && selectedModuleName) {
+      const pkg = sortedPackages.find((p) => p.name === selectedModuleName);
+      if (pkg && pkg.modules.length > 0) {
+        return pkg.modules[0].name;
+      }
+    }
+    if (sortedPackages.length > 0 && sortedPackages[0].modules.length > 0) {
+      return sortedPackages[0].modules[0].name;
+    }
+    return "";
+  };
+
+  const navigateToCodeTab = () => {
+    if (value !== "code") {
+      const moduleName = resolveModuleNameForCodeTab();
+      let path = `/${accountPagePath(isObject)}/${address}/modules/code`;
+      if (moduleName) {
+        path += `/${moduleName}`;
+      }
+      navigate({to: path, replace: true});
+    }
+  };
+
+  const handleVersionChange = (version: number | undefined) => {
+    setLedgerVersion(version);
+    if (version !== undefined) {
+      navigateToCodeTab();
+    }
+  };
+
+  const handleDiffModeToggle = () => {
+    if (!diffMode && publishHistory && publishHistory.length >= 2) {
+      setDiffBaseVersion(publishHistory[1].version);
+      setDiffCompareVersion(undefined);
+      setLedgerVersion(undefined);
+      navigateToCodeTab();
+    }
+    setDiffMode(!diffMode);
+  };
 
   const handleChange = (_event: React.SyntheticEvent, newValue: TabValue) => {
     let eventName = "";
