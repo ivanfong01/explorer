@@ -1,0 +1,282 @@
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import {
+  Box,
+  Collapse,
+  IconButton,
+  Stack,
+  Typography,
+  useTheme,
+} from "@mui/material";
+import type React from "react";
+import {memo, useState} from "react";
+import HashButton, {HashType} from "../../../components/HashButton";
+import {Link} from "../../../routing";
+import type {SentioCallTraceNode} from "../../../utils/sentioCallTrace";
+import {
+  buildAccountModuleRunPath,
+  normalizeSentioAddress,
+  parseMoveFunctionParts,
+} from "../../../utils/sentioCallTrace";
+
+type TraceSubtreeProps = {
+  node: SentioCallTraceNode;
+  depth: number;
+  defaultExpanded: boolean;
+  childIndex: number;
+};
+
+function formatGas(gas: number): string {
+  if (gas === 0) {
+    return "0 gas";
+  }
+  return `${gas.toLocaleString()} gas`;
+}
+
+const TraceSubtree = memo(function TraceSubtree({
+  node,
+  depth,
+  defaultExpanded,
+  childIndex,
+}: TraceSubtreeProps): React.JSX.Element {
+  const theme = useTheme();
+  const [open, setOpen] = useState(defaultExpanded);
+  const hasKids = node.calls.length > 0;
+  const caller = normalizeSentioAddress(node.from);
+  const callee = normalizeSentioAddress(node.to);
+  const parts = parseMoveFunctionParts(node.functionName);
+  const runPath =
+    callee && parts
+      ? buildAccountModuleRunPath(callee, parts.module, parts.fn)
+      : null;
+
+  const borderColor = theme.palette.divider;
+
+  return (
+    <Box
+      sx={{
+        marginLeft: depth > 0 ? {xs: 0.5, sm: 1.5} : 0,
+        paddingLeft: depth > 0 ? {xs: 1, sm: 1.5} : 0,
+        borderLeft: depth > 0 ? `1px solid ${borderColor}` : "none",
+        minWidth: 0,
+      }}
+    >
+      <Stack spacing={{xs: 0.5, sm: 0.25}} sx={{py: {xs: 0.5, sm: 0.35}}}>
+        <Stack
+          direction="row"
+          alignItems="flex-start"
+          spacing={0.5}
+          sx={{minWidth: 0}}
+        >
+          <Box
+            sx={{
+              width: {xs: 40, sm: 32},
+              flexShrink: 0,
+              display: "flex",
+              justifyContent: "center",
+              pt: {xs: 0.125, sm: 0.25},
+            }}
+          >
+            {hasKids ? (
+              <IconButton
+                aria-expanded={open}
+                aria-label={
+                  open ? "Collapse nested calls" : "Expand nested calls"
+                }
+                size="medium"
+                sx={{
+                  padding: {xs: 1, sm: 0.5},
+                }}
+                onClick={() => setOpen(!open)}
+              >
+                {open ? (
+                  <ExpandMoreIcon fontSize="small" />
+                ) : (
+                  <ChevronRightIcon fontSize="small" />
+                )}
+              </IconButton>
+            ) : null}
+          </Box>
+          <Box sx={{flex: 1, minWidth: 0}}>
+            <Typography
+              component="div"
+              variant="body2"
+              fontWeight={600}
+              sx={{
+                fontSize: {xs: "0.8rem", sm: undefined},
+                lineHeight: 1.35,
+                wordBreak: "break-word",
+                overflowWrap: "anywhere",
+              }}
+            >
+              {runPath ? (
+                <Link to={runPath} style={{color: "inherit"}}>
+                  {node.functionName}
+                </Link>
+              ) : (
+                node.functionName
+              )}
+            </Typography>
+            <Stack
+              direction={{xs: "column", sm: "row"}}
+              alignItems={{xs: "flex-start", sm: "center"}}
+              flexWrap="wrap"
+              columnGap={0.75}
+              rowGap={{xs: 0.75, sm: 0.25}}
+              sx={{mt: {xs: 0.75, sm: 0.25}}}
+            >
+              <Stack
+                direction="row"
+                alignItems="center"
+                flexWrap="wrap"
+                columnGap={0.5}
+                sx={{minWidth: 0, maxWidth: "100%"}}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Caller
+                </Typography>
+                {caller ? (
+                  <Box sx={{minWidth: 0, maxWidth: "100%"}}>
+                    <HashButton
+                      hash={caller}
+                      type={HashType.ACCOUNT}
+                      size="small"
+                    />
+                  </Box>
+                ) : (
+                  <Typography
+                    variant="caption"
+                    color="text.disabled"
+                    component="span"
+                    sx={{wordBreak: "break-all"}}
+                  >
+                    {node.from}
+                  </Typography>
+                )}
+              </Stack>
+              <Stack
+                direction="row"
+                alignItems="center"
+                flexWrap="wrap"
+                columnGap={0.5}
+                sx={{minWidth: 0, maxWidth: "100%"}}
+              >
+                <Typography variant="caption" color="text.secondary">
+                  Callee
+                </Typography>
+                {callee ? (
+                  <Box sx={{minWidth: 0, maxWidth: "100%"}}>
+                    <HashButton
+                      hash={callee}
+                      type={HashType.ACCOUNT}
+                      size="small"
+                    />
+                  </Box>
+                ) : (
+                  <Typography
+                    variant="caption"
+                    color="text.disabled"
+                    component="span"
+                    sx={{wordBreak: "break-all"}}
+                  >
+                    {node.to}
+                  </Typography>
+                )}
+              </Stack>
+            </Stack>
+          </Box>
+          <Typography
+            variant="caption"
+            color="text.secondary"
+            sx={{
+              flexShrink: 0,
+              pt: {xs: 0, sm: 0.35},
+              display: {xs: "none", sm: "block"},
+              alignSelf: "flex-start",
+            }}
+          >
+            {formatGas(node.gasUsed)}
+          </Typography>
+        </Stack>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          sx={{
+            display: {xs: "block", sm: "none"},
+            alignSelf: "flex-end",
+            pr: 0.5,
+          }}
+        >
+          {formatGas(node.gasUsed)}
+        </Typography>
+      </Stack>
+      {hasKids ? (
+        <Collapse in={open} timeout="auto" unmountOnExit>
+          <Box>
+            {node.calls.map((child, i) => (
+              <TraceSubtree
+                // biome-ignore lint/suspicious/noArrayIndexKey: Sentio preserves stable execution order; avoids JSON.stringify per child during render
+                key={`${depth}:${childIndex}:${i}:${child.functionName}:${child.to}`}
+                node={child}
+                depth={depth + 1}
+                defaultExpanded={depth + 1 < 2}
+                childIndex={i}
+              />
+            ))}
+          </Box>
+        </Collapse>
+      ) : null}
+    </Box>
+  );
+});
+
+type CallTraceGraphProps = {
+  root: SentioCallTraceNode;
+};
+
+export default function CallTraceGraph({
+  root,
+}: CallTraceGraphProps): React.JSX.Element {
+  const theme = useTheme();
+
+  return (
+    <Box
+      sx={{
+        border: `1px solid ${theme.palette.divider}`,
+        borderRadius: 1,
+        p: {xs: 1, sm: 2},
+        backgroundColor: theme.palette.background.paper,
+        maxWidth: "100%",
+        overflowX: "auto",
+        WebkitOverflowScrolling: "touch",
+      }}
+    >
+      <TraceSubtree node={root} depth={0} defaultExpanded childIndex={0} />
+    </Box>
+  );
+}
+
+export function SentioTraceExternalLink({
+  href,
+  label,
+}: {
+  href: string;
+  label: string;
+}): React.JSX.Element {
+  return (
+    <Typography variant="body2" component="div" sx={{wordBreak: "break-word"}}>
+      <a
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{color: "inherit"}}
+      >
+        {label}
+        <OpenInNewIcon
+          sx={{fontSize: 14, ml: 0.5, verticalAlign: "text-bottom"}}
+        />
+      </a>
+    </Typography>
+  );
+}
