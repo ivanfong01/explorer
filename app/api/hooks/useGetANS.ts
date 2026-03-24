@@ -132,7 +132,9 @@ export function useGetNameFromAddress(
           ? getLocalStorageWithExpiry(cacheKey)
           : null;
         if (cachedName) {
-          return cachedName;
+          return cachedName.endsWith(".apt") || cachedName.endsWith(".petra")
+            ? cachedName
+            : `${cachedName}.apt`;
         }
         if (nameType === NameType.LABEL) {
           return null;
