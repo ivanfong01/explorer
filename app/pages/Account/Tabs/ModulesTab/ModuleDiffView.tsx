@@ -15,6 +15,8 @@ import {useEffect, useMemo, useState} from "react";
 import {useGetAccountModule} from "../../../../api/hooks/useGetAccountModule";
 import {useGetAccountPackages} from "../../../../api/hooks/useGetAccountResource";
 import type {ModulePublishTransaction} from "../../../../api/hooks/useGetModulePublishHistory";
+import {Link} from "../../../../routing";
+import {useDecompilationEnabled} from "../../../../settings";
 import {transformCode} from "../../../../utils";
 import {
   type DecompilationView,
@@ -302,6 +304,7 @@ export default function ModuleDiffView({
   onCompareVersionChange,
 }: ModuleDiffViewProps) {
   const theme = useTheme();
+  const decompilationEnabled = useDecompilationEnabled();
   const [activeView, setActiveView] =
     useState<DiffViewType>("published-source");
 
@@ -327,7 +330,8 @@ export default function ModuleDiffView({
   const hasPublishedSource =
     basePublishedSource !== "" || comparePublishedSource !== "";
 
-  const needsBytecode = activeView !== "published-source";
+  const needsBytecode =
+    decompilationEnabled && activeView !== "published-source";
   const {
     data: baseModule,
     isLoading: baseModuleLoading,
@@ -412,11 +416,9 @@ export default function ModuleDiffView({
     return {added, removed};
   }, [diff]);
 
-  const viewTypes: DiffViewType[] = [
-    "published-source",
-    "decompiled-source",
-    "bytecode-disassembly",
-  ];
+  const viewTypes: DiffViewType[] = decompilationEnabled
+    ? ["published-source", "decompiled-source", "bytecode-disassembly"]
+    : ["published-source"];
 
   const hasError = !!moduleError || !!decompError;
 
@@ -440,7 +442,7 @@ export default function ModuleDiffView({
         />
       </Stack>
 
-      <Stack direction="row" spacing={1} flexWrap="wrap">
+      <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
         {viewTypes.map((vt) => (
           <Button
             key={vt}
@@ -452,6 +454,17 @@ export default function ModuleDiffView({
             {getViewLabel(vt)}
           </Button>
         ))}
+        {!decompilationEnabled && (
+          <Button
+            component={Link}
+            to="/settings"
+            size="small"
+            variant="text"
+            sx={{textTransform: "none"}}
+          >
+            Enable decompilation in Settings
+          </Button>
+        )}
       </Stack>
 
       {!moduleName && (

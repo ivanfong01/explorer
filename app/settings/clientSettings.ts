@@ -1,4 +1,4 @@
-import {networks, type NetworkName} from "../lib/constants";
+import {type NetworkName, networks} from "../lib/constants";
 
 /** Per-network geomi.dev API key overrides (trimmed non-empty strings only). */
 export type GeomiDevApiKeyOverridesByNetwork = Partial<
@@ -8,15 +8,18 @@ export type GeomiDevApiKeyOverridesByNetwork = Partial<
 export interface ExplorerClientSettings {
   geomiDevApiKeyOverridesByNetwork: GeomiDevApiKeyOverridesByNetwork;
   rememberGeomiDevApiKeyOverride: boolean;
+  enableDecompilation: boolean;
 }
 
 export const EXPLORER_SETTINGS_STORAGE_KEY = "aptos-explorer-settings";
+const DECOMPILATION_STORAGE_KEY = "aptos-explorer-enable-decompilation";
 
 const ALL_NETWORK_NAMES = Object.keys(networks) as NetworkName[];
 
 export const defaultExplorerClientSettings: ExplorerClientSettings = {
   geomiDevApiKeyOverridesByNetwork: {},
   rememberGeomiDevApiKeyOverride: false,
+  enableDecompilation: false,
 };
 
 type StorageLike = Pick<Storage, "getItem" | "setItem" | "removeItem">;
@@ -137,9 +140,12 @@ export function sanitizeExplorerClientSettings(
       value?.rememberGeomiDevApiKeyOverride,
     );
 
+  const enableDecompilation = value?.enableDecompilation === true;
+
   return {
     geomiDevApiKeyOverridesByNetwork,
     rememberGeomiDevApiKeyOverride,
+    enableDecompilation,
   };
 }
 
@@ -179,31 +185,82 @@ export function clearExplorerClientSettings(
     } catch {
       // Ignore storage removal failures so settings UI changes do not crash the app.
     }
+
+    try {
+      storage.removeItem(DECOMPILATION_STORAGE_KEY);
+    } catch {
+      // Ignore storage removal failures.
+    }
+  }
+}
+
+function loadDecompilationFlag(
+  storages: ExplorerSettingsStorage,
+): boolean | undefined {
+  const storage = storages.localStorage ?? storages.sessionStorage;
+  if (!storage) return undefined;
+  try {
+    const raw = storage.getItem(DECOMPILATION_STORAGE_KEY);
+    if (raw === "true") return true;
+    if (raw === "false") return false;
+    return undefined;
+  } catch {
+    return undefined;
   }
 }
 
 export function loadExplorerClientSettings(
   storages: ExplorerSettingsStorage = getAvailableStorages(),
 ): ExplorerClientSettings {
+  const decompFlag = loadDecompilationFlag(storages);
+
   const sessionSettings = loadStoredExplorerClientSettings(
     storages.sessionStorage,
   );
   if (sessionSettings) {
-    return sanitizeExplorerClientSettings({
+    const settings = sanitizeExplorerClientSettings({
       ...sessionSettings,
       rememberGeomiDevApiKeyOverride: false,
     });
+    if (decompFlag !== undefined) {
+      settings.enableDecompilation = decompFlag;
+    }
+    return settings;
   }
 
   const localSettings = loadStoredExplorerClientSettings(storages.localStorage);
   if (localSettings) {
-    return sanitizeExplorerClientSettings({
+    const settings = sanitizeExplorerClientSettings({
       ...localSettings,
       rememberGeomiDevApiKeyOverride: true,
     });
+    if (decompFlag !== undefined) {
+      settings.enableDecompilation = decompFlag;
+    }
+    return settings;
   }
 
-  return defaultExplorerClientSettings;
+  return {
+    ...defaultExplorerClientSettings,
+    enableDecompilation: decompFlag ?? false,
+  };
+}
+
+function persistDecompilationFlag(
+  enabled: boolean,
+  storages: ExplorerSettingsStorage,
+) {
+  const storage = storages.localStorage ?? storages.sessionStorage;
+  if (!storage) return;
+  try {
+    if (enabled) {
+      storage.setItem(DECOMPILATION_STORAGE_KEY, "true");
+    } else {
+      storage.removeItem(DECOMPILATION_STORAGE_KEY);
+    }
+  } catch {
+    // Ignore storage write failures.
+  }
 }
 
 export function persistExplorerClientSettings(
@@ -212,6 +269,8 @@ export function persistExplorerClientSettings(
 ) {
   const sanitizedSettings = sanitizeExplorerClientSettings(settings);
   clearExplorerClientSettings(storages);
+
+  persistDecompilationFlag(sanitizedSettings.enableDecompilation, storages);
 
   if (
     !hasAnyApiKeyOverride(sanitizedSettings.geomiDevApiKeyOverridesByNetwork)

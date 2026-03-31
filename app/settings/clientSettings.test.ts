@@ -71,6 +71,7 @@ describe("clientSettings", () => {
       ).toEqual({
         geomiDevApiKeyOverridesByNetwork: {mainnet: "override-key"},
         rememberGeomiDevApiKeyOverride: true,
+        enableDecompilation: false,
       });
     });
 
@@ -99,6 +100,7 @@ describe("clientSettings", () => {
           local: "legacy",
         },
         rememberGeomiDevApiKeyOverride: true,
+        enableDecompilation: false,
       });
     });
 
@@ -112,6 +114,7 @@ describe("clientSettings", () => {
       ).toEqual({
         geomiDevApiKeyOverridesByNetwork: {mainnet: "only-main"},
         rememberGeomiDevApiKeyOverride: true,
+        enableDecompilation: false,
       });
     });
 
@@ -144,6 +147,7 @@ describe("clientSettings", () => {
       expect(loadExplorerClientSettings(storages)).toEqual({
         geomiDevApiKeyOverridesByNetwork: {testnet: "session-key"},
         rememberGeomiDevApiKeyOverride: false,
+        enableDecompilation: false,
       });
     });
 
@@ -157,6 +161,7 @@ describe("clientSettings", () => {
       expect(loadExplorerClientSettings(storages)).toEqual({
         geomiDevApiKeyOverridesByNetwork: {devnet: "saved-key"},
         rememberGeomiDevApiKeyOverride: true,
+        enableDecompilation: false,
       });
     });
 
@@ -183,6 +188,7 @@ describe("clientSettings", () => {
         {
           geomiDevApiKeyOverridesByNetwork: {mainnet: "  persisted-key  "},
           rememberGeomiDevApiKeyOverride: false,
+          enableDecompilation: false,
         },
         storages,
       );
@@ -190,6 +196,7 @@ describe("clientSettings", () => {
       expect(loadExplorerClientSettings(storages)).toEqual({
         geomiDevApiKeyOverridesByNetwork: {mainnet: "persisted-key"},
         rememberGeomiDevApiKeyOverride: false,
+        enableDecompilation: false,
       });
     });
 
@@ -200,6 +207,7 @@ describe("clientSettings", () => {
         {
           geomiDevApiKeyOverridesByNetwork: {testnet: "persisted-key"},
           rememberGeomiDevApiKeyOverride: true,
+          enableDecompilation: false,
         },
         storages,
       );
@@ -207,6 +215,7 @@ describe("clientSettings", () => {
       expect(loadExplorerClientSettings(storages)).toEqual({
         geomiDevApiKeyOverridesByNetwork: {testnet: "persisted-key"},
         rememberGeomiDevApiKeyOverride: true,
+        enableDecompilation: false,
       });
     });
 
@@ -224,6 +233,7 @@ describe("clientSettings", () => {
         {
           geomiDevApiKeyOverridesByNetwork: {},
           rememberGeomiDevApiKeyOverride: false,
+          enableDecompilation: false,
         },
         storages,
       );
@@ -250,6 +260,74 @@ describe("clientSettings", () => {
       );
     });
 
+    it("persists enableDecompilation without API keys", () => {
+      const storages = createStorageCollection({});
+
+      persistExplorerClientSettings(
+        {
+          geomiDevApiKeyOverridesByNetwork: {},
+          rememberGeomiDevApiKeyOverride: false,
+          enableDecompilation: true,
+        },
+        storages,
+      );
+
+      expect(loadExplorerClientSettings(storages)).toEqual({
+        geomiDevApiKeyOverridesByNetwork: {},
+        rememberGeomiDevApiKeyOverride: false,
+        enableDecompilation: true,
+      });
+    });
+
+    it("persists enableDecompilation in localStorage across sessions", () => {
+      const storages = createStorageCollection({});
+
+      persistExplorerClientSettings(
+        {
+          geomiDevApiKeyOverridesByNetwork: {},
+          rememberGeomiDevApiKeyOverride: false,
+          enableDecompilation: true,
+        },
+        storages,
+      );
+
+      // Simulate new session: clear sessionStorage, keep localStorage
+      const freshStorages = {
+        localStorage: storages.localStorage,
+        sessionStorage: createStorageMock(),
+      };
+
+      expect(loadExplorerClientSettings(freshStorages)).toEqual({
+        geomiDevApiKeyOverridesByNetwork: {},
+        rememberGeomiDevApiKeyOverride: false,
+        enableDecompilation: true,
+      });
+    });
+
+    it("preserves enableDecompilation independently from session-only API keys", () => {
+      const storages = createStorageCollection({});
+
+      persistExplorerClientSettings(
+        {
+          geomiDevApiKeyOverridesByNetwork: {mainnet: "session-key"},
+          rememberGeomiDevApiKeyOverride: false,
+          enableDecompilation: true,
+        },
+        storages,
+      );
+
+      // Simulate new session: sessionStorage is cleared (API keys lost)
+      const freshStorages = {
+        localStorage: storages.localStorage,
+        sessionStorage: createStorageMock(),
+      };
+
+      const loaded = loadExplorerClientSettings(freshStorages);
+      expect(loaded.enableDecompilation).toBe(true);
+      // API keys were session-only, so they should be gone
+      expect(loaded.geomiDevApiKeyOverridesByNetwork).toEqual({});
+    });
+
     it("fails gracefully when storage writes throw", () => {
       const storages = createStorageCollection({shouldThrowOnLocalWrite: true});
 
@@ -258,6 +336,7 @@ describe("clientSettings", () => {
           {
             geomiDevApiKeyOverridesByNetwork: {mainnet: "persisted-key"},
             rememberGeomiDevApiKeyOverride: true,
+            enableDecompilation: false,
           },
           storages,
         ),
