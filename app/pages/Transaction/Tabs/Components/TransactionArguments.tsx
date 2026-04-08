@@ -67,7 +67,7 @@ function ArgumentCard({
         "&:last-child": {borderBottom: "none"},
       }}
     >
-      <Stack direction="row" spacing={1} sx={{alignItems: "baseline", mb: 0.5}}>
+      <Stack direction="row" spacing={1} alignItems="baseline" sx={{mb: 0.5}}>
         <Typography
           variant="caption"
           sx={{
@@ -528,13 +528,11 @@ export default function TransactionArguments({
             <Box>
               <Stack
                 direction="row"
-                sx={{
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  mb: 1,
-                }}
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{mb: 1}}
               >
-                <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+                <Stack direction="row" alignItems="center" spacing={1}>
                   <TerminalIcon
                     sx={{fontSize: 16, color: theme.palette.text.secondary}}
                   />

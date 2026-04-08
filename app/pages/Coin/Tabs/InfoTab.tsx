@@ -82,7 +82,7 @@ export default function InfoTab({
   }
 
   return (
-    <Box sx={{marginBottom: 3}}>
+    <Box marginBottom={3}>
       {data && (
         <ContentBox>
           <ContentRow title={"Name:"} value={data?.data?.name} />

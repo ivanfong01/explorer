@@ -22,7 +22,7 @@ export default function PayloadTab({transaction}: PayloadTabProps) {
   };
 
   return (
-    <Box sx={{marginTop: 3}}>
+    <Box marginTop={3}>
       <CollapsibleCard
         key={0}
         titleKey="Type:"

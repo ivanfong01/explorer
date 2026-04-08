@@ -154,8 +154,8 @@ export default function WalletsModal({
             align="center"
             variant="h5"
             component="h2"
+            pt={2}
             sx={{
-              pt: 2,
               display: "flex",
               flexDirection: "column",
             }}
@@ -197,7 +197,7 @@ export default function WalletsModal({
             </Box>
           )}
           {hasAptosConnectWallets && (
-            <Stack sx={{gap: 1}}>
+            <Stack gap={1}>
               {aptosConnectWallets.map((wallet) => (
                 <AptosConnectWalletRow
                   key={wallet.name}
@@ -207,8 +207,8 @@ export default function WalletsModal({
               ))}
               <Typography
                 component="p"
+                fontSize="14px"
                 sx={{
-                  fontSize: "14px",
                   display: "flex",
                   gap: 0.5,
                   justifyContent: "center",
@@ -240,12 +240,10 @@ export default function WalletsModal({
 
               <Stack
                 component={AptosPrivacyPolicy}
-                sx={{alignItems: "center", py: 0.5}}
+                alignItems="center"
+                py={0.5}
               >
-                <Typography
-                  component="p"
-                  sx={{fontSize: "12px", lineHeight: "20px"}}
-                >
+                <Typography component="p" fontSize="12px" lineHeight="20px">
                   <AptosPrivacyPolicy.Disclaimer />{" "}
                   <Box
                     component={AptosPrivacyPolicy.Link}
@@ -329,7 +327,7 @@ function WalletRow({wallet, onConnect}: WalletRowProps) {
           <Box component={WalletItem.Icon} sx={{width: 32, height: 32}} />
           <ListItemText
             primary={wallet.name}
-            slotProps={{primary: {sx: {fontSize: "1.125rem"}}}}
+            primaryTypographyProps={{fontSize: "1.125rem"}}
           />
           {isInstallRequired(wallet) ? (
             <WalletItem.InstallLink asChild>
@@ -389,12 +387,7 @@ function renderEducationScreen(screen: AboutAptosConnectEducationScreen) {
         <IconButton aria-label="Go back" onClick={screen.cancel}>
           <ArrowBack />
         </IconButton>
-        <Typography
-          variant="body1"
-          component="h2"
-          align="center"
-          sx={{width: "100%"}}
-        >
+        <Typography variant="body1" component="h2" width="100%" align="center">
           About Aptos Connect
         </Typography>
       </Box>

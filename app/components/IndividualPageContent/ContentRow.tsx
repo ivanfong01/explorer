@@ -60,7 +60,7 @@ const ContentRow = memo(function ContentRow({
         container
         rowSpacing={0.5}
         columnSpacing={4}
-        sx={{alignItems: "start"}}
+        alignItems="start"
         key={i}
       >
         <Grid

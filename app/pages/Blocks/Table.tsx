@@ -241,7 +241,9 @@ const BlockCard = React.memo(function BlockCard({block}: BlockCardProps) {
       {/* Row 1: Block height and Age */}
       <Stack
         direction="row"
-        sx={{justifyContent: "space-between", alignItems: "center", mb: 1}}
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{mb: 1}}
       >
         <Typography
           sx={{fontWeight: 600, fontSize: "0.95rem", color: "primary.main"}}
@@ -267,12 +269,10 @@ const BlockCard = React.memo(function BlockCard({block}: BlockCardProps) {
       {/* Row 3: Stats */}
       <Stack
         direction="row"
-        sx={{
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          flexWrap: "wrap",
-          gap: 1.5,
-        }}
+        justifyContent="space-between"
+        alignItems="flex-start"
+        flexWrap="wrap"
+        gap={1.5}
       >
         <Box>
           <Typography variant="caption" sx={{color: "text.secondary"}}>

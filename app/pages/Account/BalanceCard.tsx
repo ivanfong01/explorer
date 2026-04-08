@@ -72,23 +72,23 @@ export default function BalanceCard({address}: BalanceCardProps) {
   const selectedProvider = portfolioProviders[portfolioProvider];
 
   return balance.data ? (
-    <Card sx={{height: "auto"}}>
-      <Stack spacing={1.5} sx={{marginY: 1}}>
+    <Card height="auto">
+      <Stack spacing={1.5} marginY={1}>
         {/* APT balance */}
-        <Typography sx={{fontSize: 17, fontWeight: 700}}>
+        <Typography fontSize={17} fontWeight={700}>
           {`${getFormattedBalanceStr(balance.data)} APT`}
         </Typography>
 
         {/* USD value */}
         {networkName === "mainnet" && balanceUSD !== null && (
-          <Typography sx={{fontSize: 14, color: theme.palette.text.secondary}}>
+          <Typography fontSize={14} color={theme.palette.text.secondary}>
             ${balanceUSD.toLocaleString(undefined, {maximumFractionDigits: 2})}{" "}
             USD
           </Typography>
         )}
 
-        <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
-          <Typography sx={{fontSize: 12, color: theme.palette.text.secondary}}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Typography fontSize={12} color={theme.palette.text.secondary}>
             Balance
           </Typography>
           <StyledTooltip
@@ -100,10 +100,11 @@ export default function BalanceCard({address}: BalanceCardProps) {
           </StyledTooltip>
         </Stack>
 
-        <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Typography
             id="defi-positions-provider-label"
-            sx={{fontSize: 12, color: theme.palette.text.secondary}}
+            fontSize={12}
+            color={theme.palette.text.secondary}
           >
             DeFi positions on
           </Typography>
@@ -142,7 +143,7 @@ export default function BalanceCard({address}: BalanceCardProps) {
           <Link
             href={selectedProvider.getUrl(address)}
             underline="none"
-            sx={{fontSize: 12}}
+            fontSize={12}
             target="_blank"
             rel="noopener noreferrer"
             aria-label={`Open portfolio on ${selectedProvider.label} in new tab`}

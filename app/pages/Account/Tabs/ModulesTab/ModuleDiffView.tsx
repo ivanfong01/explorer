@@ -14,6 +14,7 @@ import {diffLines} from "diff";
 import {useEffect, useMemo, useState} from "react";
 import {useGetAccountModule} from "../../../../api/hooks/useGetAccountModule";
 import {useGetAccountPackages} from "../../../../api/hooks/useGetAccountResource";
+import AccountError from "../../Error";
 import type {ModulePublishTransaction} from "../../../../api/hooks/useGetModulePublishHistory";
 import {Link} from "../../../../routing";
 import {useDecompilationEnabled} from "../../../../settings";
@@ -22,7 +23,6 @@ import {
   type DecompilationView,
   getDecompiledCodeView,
 } from "../../../../utils/moveDecompiler";
-import AccountError from "../../Error";
 
 type DiffViewType =
   | "published-source"
@@ -59,11 +59,7 @@ function VersionSelect({
 
   return (
     <Stack direction="column" spacing={0.5} sx={{minWidth: 240}}>
-      <Typography
-        variant="caption"
-        color="text.secondary"
-        sx={{fontWeight: 600}}
-      >
+      <Typography variant="caption" color="text.secondary" fontWeight={600}>
         {label}
       </Typography>
       <Select
@@ -438,11 +434,7 @@ export default function ModuleDiffView({
 
   return (
     <Stack spacing={2}>
-      <Stack
-        direction="row"
-        spacing={2}
-        sx={{alignItems: "flex-end", flexWrap: "wrap"}}
-      >
+      <Stack direction="row" spacing={2} alignItems="flex-end" flexWrap="wrap">
         <VersionSelect
           label="Base (old)"
           value={baseVersion}
@@ -460,11 +452,7 @@ export default function ModuleDiffView({
         />
       </Stack>
 
-      <Stack
-        direction="row"
-        spacing={1}
-        sx={{flexWrap: "wrap", alignItems: "center"}}
-      >
+      <Stack direction="row" spacing={1} flexWrap="wrap" alignItems="center">
         {viewTypes.map((vt) => (
           <Button
             key={vt}
@@ -491,12 +479,10 @@ export default function ModuleDiffView({
 
       {!moduleName && (
         <Box
-          sx={{
-            p: 3,
-            bgcolor: theme.palette.background.paper,
-            borderRadius: 1,
-            textAlign: "center",
-          }}
+          p={3}
+          bgcolor={theme.palette.background.paper}
+          borderRadius={1}
+          textAlign="center"
         >
           <Typography color="text.secondary">
             Select a module from the sidebar to compare versions.
@@ -509,12 +495,10 @@ export default function ModuleDiffView({
         !hasPublishedSource &&
         !isLoading && (
           <Box
-            sx={{
-              p: 3,
-              bgcolor: theme.palette.background.paper,
-              borderRadius: 1,
-              textAlign: "center",
-            }}
+            p={3}
+            bgcolor={theme.palette.background.paper}
+            borderRadius={1}
+            textAlign="center"
           >
             <Typography color="text.secondary">
               Published source is not available for module{" "}
@@ -525,9 +509,7 @@ export default function ModuleDiffView({
         )}
 
       {moduleError && (
-        <Box
-          sx={{p: 2, bgcolor: theme.palette.background.paper, borderRadius: 1}}
-        >
+        <Box p={2} bgcolor={theme.palette.background.paper} borderRadius={1}>
           <Typography color="error.main" variant="body2">
             Failed to load module bytecode: {moduleError}
           </Typography>
@@ -535,9 +517,7 @@ export default function ModuleDiffView({
       )}
 
       {decompError && !moduleError && (
-        <Box
-          sx={{p: 2, bgcolor: theme.palette.background.paper, borderRadius: 1}}
-        >
+        <Box p={2} bgcolor={theme.palette.background.paper} borderRadius={1}>
           <Typography color="error.main" variant="body2">
             Decompilation error: {decompError}
           </Typography>
@@ -545,8 +525,8 @@ export default function ModuleDiffView({
       )}
 
       {!moduleName || hasError ? null : isLoading ? (
-        <Box sx={{display: "flex", justifyContent: "center", py: 4}}>
-          <Stack spacing={1} sx={{alignItems: "center"}}>
+        <Box display="flex" justifyContent="center" py={4}>
+          <Stack spacing={1} alignItems="center">
             <CircularProgress size={24} />
             {needsBytecode && (
               <Typography variant="caption" color="text.secondary">
@@ -559,12 +539,10 @@ export default function ModuleDiffView({
         </Box>
       ) : baseCode === compareCode ? (
         <Box
-          sx={{
-            p: 3,
-            bgcolor: theme.palette.background.paper,
-            borderRadius: 1,
-            textAlign: "center",
-          }}
+          p={3}
+          bgcolor={theme.palette.background.paper}
+          borderRadius={1}
+          textAlign="center"
         >
           <Typography color="text.secondary">
             No differences between {baseLabel} and {compareLabel} for module{" "}
@@ -575,17 +553,17 @@ export default function ModuleDiffView({
           </Typography>
         </Box>
       ) : (
-        <Box sx={{bgcolor: theme.palette.background.paper, borderRadius: 1}}>
+        <Box bgcolor={theme.palette.background.paper} borderRadius={1}>
           <Stack
             direction="row"
             spacing={1}
+            p={1.5}
+            alignItems="center"
             sx={{
-              p: 1.5,
-              alignItems: "center",
               borderBottom: `1px solid ${theme.palette.divider}`,
             }}
           >
-            <Typography variant="body2" sx={{fontWeight: 600}}>
+            <Typography variant="body2" fontWeight={600}>
               {moduleName}
             </Typography>
             <Chip

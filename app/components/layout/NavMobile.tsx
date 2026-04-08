@@ -63,13 +63,11 @@ export default function NavMobile() {
         anchorEl={menuAnchorEl}
         open={menuOpen}
         onClose={handleMenuClose}
-        slotProps={{
-          list: {
-            "aria-labelledby": "nav-mobile-button",
-            sx: {
-              minWidth: 240,
-              padding: "1rem",
-            },
+        MenuListProps={{
+          "aria-labelledby": "nav-mobile-button",
+          sx: {
+            minWidth: 240,
+            padding: "1rem",
           },
         }}
         sx={{

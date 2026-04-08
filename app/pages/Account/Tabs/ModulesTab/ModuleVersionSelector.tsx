@@ -86,7 +86,7 @@ export default function ModuleVersionSelector({
 
   if (isLoading && selectedVersion === undefined) {
     return (
-      <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+      <Stack direction="row" alignItems="center" spacing={1}>
         <HistoryOutlinedIcon fontSize="small" color="action" />
         <CircularProgress size={16} />
       </Stack>
@@ -97,8 +97,9 @@ export default function ModuleVersionSelector({
     return (
       <Stack
         direction="row"
+        alignItems="center"
         spacing={1.5}
-        sx={{alignItems: "center", flexWrap: "wrap"}}
+        sx={{flexWrap: "wrap"}}
       >
         <HistoryOutlinedIcon fontSize="small" color="action" />
         <SelectedVersionIndicator
@@ -111,7 +112,7 @@ export default function ModuleVersionSelector({
 
   if (!hasHistory) {
     return (
-      <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+      <Stack direction="row" alignItems="center" spacing={1}>
         <HistoryOutlinedIcon fontSize="small" color="action" />
         <Typography variant="body2" color="text.secondary">
           Version: Latest (only latest available)
@@ -124,8 +125,9 @@ export default function ModuleVersionSelector({
     return (
       <Stack
         direction="row"
+        alignItems="center"
         spacing={1.5}
-        sx={{alignItems: "center", flexWrap: "wrap"}}
+        sx={{flexWrap: "wrap"}}
       >
         <HistoryOutlinedIcon fontSize="small" color="action" />
         <Typography variant="body2" color="text.secondary">
@@ -146,8 +148,9 @@ export default function ModuleVersionSelector({
   return (
     <Stack
       direction="row"
+      alignItems="center"
       spacing={1.5}
-      sx={{alignItems: "center", flexWrap: "wrap"}}
+      sx={{flexWrap: "wrap"}}
     >
       <HistoryOutlinedIcon fontSize="small" color="action" />
       <Typography variant="body2" color="text.secondary">
@@ -166,8 +169,9 @@ export default function ModuleVersionSelector({
         <MenuItem value="latest">
           <Stack
             direction="row"
+            alignItems="center"
             spacing={1}
-            sx={{alignItems: "center", width: "100%"}}
+            sx={{width: "100%"}}
           >
             <Typography variant="body2">Latest</Typography>
             <Chip label="current" size="small" color="primary" />

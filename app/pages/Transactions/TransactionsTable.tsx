@@ -261,18 +261,16 @@ function TransactionDetailDialog({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 2,
-            m: 2,
-            maxHeight: "calc(100vh - 32px)",
-          },
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          m: 2,
+          maxHeight: "calc(100vh - 32px)",
         },
       }}
     >
       <DialogTitle sx={{pr: 6, pb: 1}}>
-        <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+        <Stack direction="row" alignItems="center" spacing={1}>
           <Typography variant="h6" component="span">
             Transaction
           </Typography>
@@ -302,10 +300,11 @@ function TransactionDetailDialog({
           {/* Type and Timestamp */}
           <Stack
             direction="row"
-            sx={{justifyContent: "space-between", alignItems: "center"}}
+            justifyContent="space-between"
+            alignItems="center"
           >
-            <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
-              <Typography variant="body2" sx={{color: "text.secondary"}}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="body2" color="text.secondary">
                 Type:
               </Typography>
               <TableTransactionType type={transaction.type} />
@@ -340,7 +339,7 @@ function TransactionDetailDialog({
               <Typography variant="body2" color="text.secondary" sx={{mb: 0.5}}>
                 Sender
               </Typography>
-              <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+              <Stack direction="row" alignItems="center" spacing={1}>
                 <HashButton hash={sender} type={HashType.ACCOUNT} />
                 <Tooltip
                   title={copiedField === "sender" ? "Copied!" : "Copy address"}
@@ -365,7 +364,7 @@ function TransactionDetailDialog({
                   ? "Contract"
                   : "Receiver"}
               </Typography>
-              <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+              <Stack direction="row" alignItems="center" spacing={1}>
                 {counterparty.role === "smartContract" ? (
                   <TextSnippetOutlined
                     sx={{fontSize: 18, color: theme.palette.text.secondary}}
@@ -496,9 +495,11 @@ function TransactionCard({transaction, address}: TransactionCardProps) {
         {/* Row 1: Version, Type Icon, Status, Timestamp */}
         <Stack
           direction="row"
-          sx={{justifyContent: "space-between", alignItems: "center", mb: 0.75}}
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{mb: 0.75}}
         >
-          <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+          <Stack direction="row" spacing={1} alignItems="center">
             <Typography
               sx={{fontWeight: 600, fontSize: "0.9rem", color: "primary.main"}}
             >
@@ -527,11 +528,12 @@ function TransactionCard({transaction, address}: TransactionCardProps) {
         {/* Row 3: Counterparty + Amount/Gas */}
         <Stack
           direction="row"
-          sx={{justifyContent: "space-between", alignItems: "center"}}
+          justifyContent="space-between"
+          alignItems="center"
         >
           <Box sx={{minWidth: 0, overflow: "hidden"}}>
             {counterparty && (
-              <Stack direction="row" spacing={0.5} sx={{alignItems: "center"}}>
+              <Stack direction="row" alignItems="center" spacing={0.5}>
                 {counterparty.role === "smartContract" ? (
                   <Tooltip title="Smart Contract" placement="top">
                     <TextSnippetOutlined
@@ -560,7 +562,8 @@ function TransactionCard({transaction, address}: TransactionCardProps) {
           <Stack
             direction="row"
             spacing={1}
-            sx={{alignItems: "center", flexShrink: 0}}
+            alignItems="center"
+            sx={{flexShrink: 0}}
           >
             <TransactionTokenTransfer
               transaction={transaction}

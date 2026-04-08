@@ -29,7 +29,7 @@ function CoinTransferCodeLine({
         underline="none"
         style={{color: "inherit"}}
       >
-        <Stack direction="row" spacing={1.5} sx={{alignItems: "center"}}>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
           <CurrencyExchangeOutlinedIcon sx={{fontSize: 17, padding: 0}} />
           <Box>{`Coin Transfer`}</Box>
         </Stack>
@@ -41,7 +41,7 @@ function CoinTransferCodeLine({
 function ScriptCodeLine({sx}: {sx?: SxProps<Theme>}): React.JSX.Element {
   return (
     <CodeLineBox sx={[...(Array.isArray(sx) ? sx : [sx])]}>
-      <Stack direction="row" spacing={1.5} sx={{alignItems: "center"}}>
+      <Stack direction="row" alignItems="center" spacing={1.5}>
         <DescriptionOutlinedIcon sx={{fontSize: 17, padding: 0}} />
         <Box>{`Script`}</Box>
       </Stack>
@@ -52,7 +52,7 @@ function ScriptCodeLine({sx}: {sx?: SxProps<Theme>}): React.JSX.Element {
 function FaucetCodeLine({sx}: {sx?: SxProps<Theme>}): React.JSX.Element {
   return (
     <CodeLineBox sx={[...(Array.isArray(sx) ? sx : [sx])]}>
-      <Stack direction="row" spacing={1.5} sx={{alignItems: "center"}}>
+      <Stack direction="row" alignItems="center" spacing={1.5}>
         <WaterDropOutlined sx={{fontSize: 17, padding: 0}} />
         <Box>{`Faucet`}</Box>
       </Stack>

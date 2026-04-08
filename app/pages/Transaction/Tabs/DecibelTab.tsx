@@ -123,11 +123,7 @@ function AmountWithAsset({
   const displayAmount = getFormattedBalanceStr(amount, decimals);
 
   return (
-    <Stack
-      direction="row"
-      spacing={1}
-      sx={{alignItems: "center", flexWrap: "wrap"}}
-    >
+    <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
       <Typography variant="body2" component="span">
         {displayAmount}
       </Typography>
@@ -144,7 +140,7 @@ function AmountWithAsset({
 function MarketValue({hash}: {hash: string}) {
   const {data: name} = useGetDecibelMarketName(hash);
   return (
-    <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+    <Stack direction="row" alignItems="center" spacing={1}>
       {name && (
         <Typography variant="body2" sx={{fontWeight: 600}}>
           {name}
@@ -220,7 +216,8 @@ function OrderCard({order}: {order: DecibelOrder}) {
       <Stack spacing={1}>
         <Stack
           direction="row"
-          sx={{justifyContent: "space-between", alignItems: "center"}}
+          justifyContent="space-between"
+          alignItems="center"
         >
           <Typography variant="subtitle2">
             {icon} {label}
@@ -342,7 +339,7 @@ function DepositCard({
   return (
     <Paper sx={{p: 2, mb: 1.5}}>
       <Stack spacing={1}>
-        <Stack direction="row" spacing={0.5} sx={{alignItems: "center"}}>
+        <Stack direction="row" alignItems="center" spacing={0.5}>
           <DownloadOutlinedIcon fontSize="small" />
           <Typography variant="subtitle2">Deposit</Typography>
         </Stack>
@@ -451,7 +448,7 @@ function WithdrawCard({
   return (
     <Paper sx={{p: 2, mb: 1.5}}>
       <Stack spacing={1}>
-        <Stack direction="row" spacing={0.5} sx={{alignItems: "center"}}>
+        <Stack direction="row" alignItems="center" spacing={0.5}>
           <UploadOutlinedIcon fontSize="small" />
           <Typography variant="subtitle2">Withdraw</Typography>
         </Stack>
@@ -532,11 +529,7 @@ function KeyValue({
   children: React.ReactNode;
 }) {
   return (
-    <Stack
-      direction="row"
-      spacing={1}
-      sx={{alignItems: "center", flexWrap: "wrap"}}
-    >
+    <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
       <Typography
         variant="body2"
         color="text.secondary"

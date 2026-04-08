@@ -49,7 +49,8 @@ export default function TableTooltip({children, title}: TableTooltipProps) {
           >
             <Stack
               direction="row"
-              sx={{justifyContent: "space-between", alignItems: "center"}}
+              justifyContent="space-between"
+              alignItems="center"
             >
               <TooltipTypography variant="h6">{title}</TooltipTypography>
               <IconButton onClick={handleClose} sx={{padding: 0.5}}>

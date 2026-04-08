@@ -172,19 +172,18 @@ export function MovePackageManifest({manifest}: {manifest: string}) {
     <Box>
       <Stack
         direction="row"
+        display="flex"
+        justifyContent="space-between"
+        alignItems="center"
         spacing={1}
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-        }}
       >
         <Stack
           direction="row"
           spacing={1}
-          sx={{marginY: "16px", alignItems: "center"}}
+          marginY={"16px"}
+          alignItems={"center"}
         >
-          <Typography sx={{fontSize: 20, fontWeight: 700}}>
+          <Typography fontSize={20} fontWeight={700}>
             Package Manifest
           </Typography>
         </Stack>
@@ -214,8 +213,8 @@ export function MovePackageManifest({manifest}: {manifest: string}) {
               >
                 <ContentCopy style={{height: "1.25rem", width: "1.25rem"}} />
                 <Typography
+                  marginLeft={1}
                   sx={{
-                    marginLeft: 1,
                     display: "inline",
                     whiteSpace: "nowrap",
                   }}
@@ -240,8 +239,8 @@ export function MovePackageManifest({manifest}: {manifest: string}) {
             >
               <FileDownload style={{height: "1.25rem", width: "1.25rem"}} />
               <Typography
+                marginLeft={1}
                 sx={{
-                  marginLeft: 1,
                   display: "inline",
                   whiteSpace: "nowrap",
                 }}

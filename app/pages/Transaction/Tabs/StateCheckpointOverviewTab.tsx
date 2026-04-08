@@ -18,7 +18,7 @@ export default function StateCheckpointOverviewTab({
     transaction as Types.Transaction_StateCheckpointTransaction;
 
   return (
-    <Box sx={{marginBottom: 3}}>
+    <Box marginBottom={3}>
       <ContentBox>
         <ContentRow
           title={"Version:"}

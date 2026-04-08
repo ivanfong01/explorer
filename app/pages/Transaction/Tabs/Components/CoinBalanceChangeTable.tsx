@@ -205,12 +205,10 @@ function BalanceChangeDetailsModal({
       onClose={onClose}
       fullWidth
       maxWidth="sm"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 2,
-            backgroundColor: theme.palette.background.paper,
-          },
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          backgroundColor: theme.palette.background.paper,
         },
       }}
     >
@@ -222,7 +220,7 @@ function BalanceChangeDetailsModal({
           pb: 1,
         }}
       >
-        <Typography variant="h6" sx={{fontWeight: 600}}>
+        <Typography variant="h6" fontWeight={600}>
           Balance Change Details
         </Typography>
         <IconButton
@@ -405,9 +403,11 @@ function BalanceChangeCard({balanceChange, onClick}: BalanceChangeCardProps) {
       {/* Row 1: Type badge and Amount */}
       <Stack
         direction="row"
-        sx={{justifyContent: "space-between", alignItems: "center", mb: 0.75}}
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{mb: 0.75}}
       >
-        <Stack direction="row" spacing={1} sx={{alignItems: "center"}}>
+        <Stack direction="row" spacing={1} alignItems="center">
           <Typography
             variant="caption"
             sx={{
@@ -445,7 +445,9 @@ function BalanceChangeCard({balanceChange, onClick}: BalanceChangeCardProps) {
       {/* Row 2: Account address and Asset with icon */}
       <Stack
         direction="row"
-        sx={{justifyContent: "space-between", alignItems: "center", mt: 0.5}}
+        justifyContent="space-between"
+        alignItems="center"
+        sx={{mt: 0.5}}
       >
         <Box
           sx={{
@@ -461,7 +463,7 @@ function BalanceChangeCard({balanceChange, onClick}: BalanceChangeCardProps) {
           >
             Account
           </Typography>
-          <Stack direction="row" spacing={0.75} sx={{alignItems: "center"}}>
+          <Stack direction="row" spacing={0.75} alignItems="center">
             {balanceChange.address && (
               <Box
                 sx={{
@@ -506,7 +508,8 @@ function BalanceChangeCard({balanceChange, onClick}: BalanceChangeCardProps) {
         <Stack
           direction="row"
           spacing={0.5}
-          sx={{alignItems: "center", flexShrink: 0}}
+          alignItems="center"
+          sx={{flexShrink: 0}}
         >
           {logoUrl && (
             <img

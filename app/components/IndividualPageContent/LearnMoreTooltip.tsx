@@ -25,10 +25,10 @@ export function LearnMoreTooltip({
     <TooltipBox>
       <StyledTooltip
         title={
-          <Stack sx={{alignItems: "flex-end"}}>
+          <Stack alignItems="flex-end">
             {linkToText ? (
               <Link
-                sx={{alignSelf: "flex-end"}}
+                alignSelf="flex-end"
                 href={link}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -41,7 +41,7 @@ export function LearnMoreTooltip({
                 <Typography variant="inherit">{text}</Typography>
                 {link && (
                   <Link
-                    sx={{alignSelf: "flex-end"}}
+                    alignSelf="flex-end"
                     href={link}
                     target="_blank"
                     rel="noopener noreferrer"

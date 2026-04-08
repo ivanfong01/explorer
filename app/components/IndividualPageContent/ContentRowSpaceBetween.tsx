@@ -16,8 +16,8 @@ export default function ContentRowSpaceBetween({
 }: ContentRowSmallProps) {
   const theme = useTheme();
   return (
-    <Stack direction="row" sx={{justifyContent: "space-between"}}>
-      <Stack direction="row" spacing={0.5} sx={{alignItems: "center"}}>
+    <Stack direction="row" justifyContent="space-between">
+      <Stack direction="row" alignItems="center" spacing={0.5}>
         <Typography
           sx={{fontSize: "0.875rem", color: theme.palette.text.secondary}}
         >

@@ -23,7 +23,7 @@ export default function AmountTextField({
 }: AmountTextFieldProps) {
   return (
     <FormControl fullWidth>
-      <Stack direction="row" sx={{justifyContent: "space-between"}}>
+      <Stack direction="row" justifyContent="space-between">
         <FormHelperText sx={{fontSize: "1rem"}}>Enter Amount</FormHelperText>
       </Stack>
       <OutlinedInput

@@ -33,8 +33,10 @@ function ExpandAllCollapseAllButtons({
   return (
     <Stack
       direction="row"
+      justifyContent="flex-end"
       spacing={1}
-      sx={{justifyContent: "flex-end", marginY: 0.5, height: 16}}
+      marginY={0.5}
+      height={16}
     >
       <Button
         variant="text"
@@ -112,11 +114,7 @@ export default function CollapsibleCards({
           collapseAll={collapseAll}
         />
       )}
-      <Stack
-        direction="column"
-        spacing={1}
-        sx={{marginTop: hideButtons ? 3 : 0}}
-      >
+      <Stack direction="column" spacing={1} marginTop={hideButtons ? 3 : 0}>
         {children}
       </Stack>
     </Box>

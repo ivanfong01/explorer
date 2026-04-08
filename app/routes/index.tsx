@@ -79,7 +79,7 @@ function LandingPage() {
             <Stack
               direction={{xs: "column", sm: "row"}}
               spacing={2}
-              sx={{justifyContent: "center"}}
+              justifyContent="center"
             >
               <Button component={Link} to="/transactions" variant="primary">
                 Browse Transactions

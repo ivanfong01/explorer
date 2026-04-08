@@ -325,13 +325,11 @@ function ModulesTabs({
       }}
     >
       <Box
-        sx={{
-          padding: 2,
-          marginY: 4,
-          borderColor: "red",
-          borderRadius: 1,
-          bgcolor: theme.palette.background.paper,
-        }}
+        padding={2}
+        marginY={4}
+        borderColor="red"
+        borderRadius={1}
+        bgcolor={theme.palette.background.paper}
       >
         <ModuleVersionSelector
           address={address}
@@ -340,7 +338,7 @@ function ModulesTabs({
           diffMode={diffMode}
           onDiffModeToggle={handleDiffModeToggle}
         />
-        <Box sx={{mt: 2}}>
+        <Box mt={2}>
           <StyledTabs value={value} onChange={handleChange}>
             {tabValues.map((tabKey, i) => {
               const isDisabled =
