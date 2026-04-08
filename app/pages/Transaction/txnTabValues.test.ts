@@ -1,6 +1,7 @@
 // Covers FEAT-TXN-001 — Transaction tab selection by type
 import {describe, expect, it} from "vitest";
 import {TransactionTypeName} from "../../components/TransactionType";
+import {DECIBEL_CONTRACTS} from "../../utils/decibel";
 import {getTabValues} from "./Tabs";
 
 function makeTxn(type: string) {
@@ -18,6 +19,26 @@ describe("FEAT-TXN-001 — getTabValues", () => {
       "changes",
       "trace",
     ]);
+  });
+
+  it("includes decibelDetail tab for Decibel user transactions", () => {
+    const decibelTxn = {
+      type: TransactionTypeName.User,
+      events: [
+        {
+          type: `${DECIBEL_CONTRACTS[0]}::market_types::OrderEvent`,
+          data: {},
+        },
+      ],
+    } as Parameters<typeof getTabValues>[0];
+    const tabs = getTabValues(decibelTxn);
+    expect(tabs).toContain("decibelDetail");
+    expect(tabs.indexOf("decibelDetail")).toBe(1); // after overview
+  });
+
+  it("excludes decibelDetail tab for non-Decibel user transactions", () => {
+    const tabs = getTabValues(makeTxn(TransactionTypeName.User));
+    expect(tabs).not.toContain("decibelDetail");
   });
 
   it("returns overview, events, changes for block metadata", () => {
