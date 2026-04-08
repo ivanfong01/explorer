@@ -8,10 +8,12 @@ import {
   Stack,
   Table,
   TableBody,
+  TableContainer,
   TableHead,
   TableRow,
   Tooltip,
   Typography,
+  useMediaQuery,
   useTheme,
 } from "@mui/material";
 import * as React from "react";
@@ -21,6 +23,10 @@ import JsonViewCard from "../../../../components/IndividualPageContent/JsonViewC
 import GeneralTableCell from "../../../../components/Table/GeneralTableCell";
 import GeneralTableHeaderCell from "../../../../components/Table/GeneralTableHeaderCell";
 import GeneralTableRow from "../../../../components/Table/GeneralTableRow";
+import {
+  ResponsiveKeyValueRow,
+  ResponsiveKeyValueTable,
+} from "../../../../components/Table/ResponsiveKeyValueTable";
 import {DECIBEL_CONTRACTS} from "../../../../utils/decibel";
 
 // ---------------------------------------------------------------------------
@@ -70,27 +76,7 @@ export default function DecibelEventView({
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-function Row({label, children}: {label: string; children: React.ReactNode}) {
-  return (
-    <GeneralTableRow>
-      <GeneralTableCell
-        component="th"
-        scope="row"
-        sx={{
-          verticalAlign: "top",
-          fontWeight: 600,
-          color: "text.primary",
-          width: "38%",
-        }}
-      >
-        {label}
-      </GeneralTableCell>
-      <GeneralTableCell sx={{verticalAlign: "top"}}>
-        {children}
-      </GeneralTableCell>
-    </GeneralTableRow>
-  );
-}
+const Row = ResponsiveKeyValueRow;
 
 function EventTable({
   children,
@@ -102,7 +88,7 @@ function EventTable({
   const [showRaw, setShowRaw] = React.useState(false);
 
   return (
-    <Paper variant="outlined" sx={{overflow: "hidden"}}>
+    <Paper variant="outlined" sx={{overflow: "hidden", maxWidth: "100%"}}>
       <Stack direction="row" justifyContent="flex-end" sx={{px: 1, pt: 0.5}}>
         <Tooltip title={showRaw ? "Formatted view" : "Raw JSON"}>
           <IconButton size="small" onClick={() => setShowRaw((v) => !v)}>
@@ -115,13 +101,17 @@ function EventTable({
         </Tooltip>
       </Stack>
       {showRaw ? (
-        <Box sx={{p: 1, pt: 0}}>
+        <Box sx={{p: 1, pt: 0, maxWidth: "100%", minWidth: 0}}>
           <JsonViewCard data={rawData} />
         </Box>
       ) : (
-        <Table size="small" sx={{tableLayout: "fixed"}}>
-          <TableBody>{children}</TableBody>
-        </Table>
+        <ResponsiveKeyValueTable
+          size="small"
+          tableLayout="fixed"
+          stackContainerSx={{px: 1.5, pb: 1, pt: 0}}
+        >
+          {children}
+        </ResponsiveKeyValueTable>
       )}
     </Paper>
   );
@@ -149,13 +139,20 @@ function ObjectValue({hash}: {hash: string}) {
 function MarketValue({hash}: {hash: string}) {
   const {data: name} = useGetDecibelMarketName(hash);
   return (
-    <Stack direction="row" alignItems="center" spacing={1}>
+    <Stack
+      direction={{xs: "column", sm: "row"}}
+      alignItems={{xs: "flex-start", sm: "center"}}
+      spacing={1}
+      sx={{width: "100%", minWidth: 0}}
+    >
       {name && (
         <Typography variant="body2" sx={{fontWeight: 600}}>
           {name}
         </Typography>
       )}
-      <HashButton hash={hash} type={HashType.OBJECT} size="small" />
+      <Box sx={{minWidth: 0, maxWidth: "100%"}}>
+        <HashButton hash={hash} type={HashType.OBJECT} size="small" />
+      </Box>
     </Stack>
   );
 }
@@ -275,7 +272,55 @@ function PriceSizeTable({
   color: "success" | "error";
 }) {
   const theme = useTheme();
+  const isNarrow = useMediaQuery(theme.breakpoints.down("md"));
   if (prices.length === 0) return null;
+
+  if (isNarrow) {
+    return (
+      <Box sx={{mb: 1, width: "100%", minWidth: 0}}>
+        <Typography
+          variant="subtitle2"
+          sx={{mb: 0.5, color: theme.palette[color].main}}
+        >
+          {label} ({prices.length})
+        </Typography>
+        <Stack spacing={0.75}>
+          {prices.map((price, i) => {
+            const size = sizes[i] ?? "—";
+            return (
+              <Stack
+                key={`${price}-${size}`}
+                direction="row"
+                justifyContent="space-between"
+                alignItems="baseline"
+                spacing={1}
+                sx={{
+                  flexWrap: "wrap",
+                  gap: 0.5,
+                  py: 0.5,
+                  borderBottom: `1px solid ${theme.palette.divider}`,
+                  "&:last-of-type": {borderBottom: "none"},
+                }}
+              >
+                <Box sx={{minWidth: 0, overflowWrap: "anywhere"}}>
+                  <MonoText>{price}</MonoText>
+                </Box>
+                <Box
+                  sx={{
+                    minWidth: 0,
+                    overflowWrap: "anywhere",
+                    textAlign: "right",
+                  }}
+                >
+                  <MonoText>{size}</MonoText>
+                </Box>
+              </Stack>
+            );
+          })}
+        </Stack>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{mb: 1}}>
@@ -285,29 +330,31 @@ function PriceSizeTable({
       >
         {label} ({prices.length})
       </Typography>
-      <Table size="small">
-        <TableHead>
-          <TableRow>
-            <GeneralTableHeaderCell header="Price" />
-            <GeneralTableHeaderCell header="Size" />
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {prices.map((price, i) => {
-            const size = sizes[i] ?? "—";
-            return (
-              <GeneralTableRow key={`${price}-${size}`}>
-                <GeneralTableCell>
-                  <MonoText>{price}</MonoText>
-                </GeneralTableCell>
-                <GeneralTableCell>
-                  <MonoText>{size}</MonoText>
-                </GeneralTableCell>
-              </GeneralTableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+      <TableContainer sx={{maxWidth: "100%"}}>
+        <Table size="small">
+          <TableHead>
+            <TableRow>
+              <GeneralTableHeaderCell header="Price" />
+              <GeneralTableHeaderCell header="Size" />
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {prices.map((price, i) => {
+              const size = sizes[i] ?? "—";
+              return (
+                <GeneralTableRow key={`${price}-${size}`}>
+                  <GeneralTableCell>
+                    <MonoText>{price}</MonoText>
+                  </GeneralTableCell>
+                  <GeneralTableCell>
+                    <MonoText>{size}</MonoText>
+                  </GeneralTableCell>
+                </GeneralTableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </Box>
   );
 }
@@ -592,17 +639,30 @@ function FundingView({funding}: {funding: Record<string, unknown>}) {
     ([key]) => key !== "__variant__",
   );
   return (
-    <Stack spacing={0.5}>
+    <Stack spacing={0.75}>
       {entries.map(([key, value]) => (
-        <Stack key={key} direction="row" spacing={1} alignItems="baseline">
+        <Stack
+          key={key}
+          direction={{xs: "column", sm: "row"}}
+          spacing={{xs: 0.25, sm: 1}}
+          alignItems={{xs: "stretch", sm: "baseline"}}
+        >
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{minWidth: 140, flexShrink: 0}}
+            sx={{minWidth: {xs: 0, sm: 140}, flexShrink: 0}}
           >
             {FUNDING_LABELS[key] ?? key}
           </Typography>
-          <MonoText>{String(value)}</MonoText>
+          <Box
+            sx={{
+              minWidth: 0,
+              overflowWrap: "anywhere",
+              wordBreak: "break-word",
+            }}
+          >
+            <MonoText>{String(value)}</MonoText>
+          </Box>
         </Stack>
       ))}
     </Stack>

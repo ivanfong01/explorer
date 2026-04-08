@@ -1,10 +1,10 @@
-import {Box, Paper, Table, Typography, useTheme} from "@mui/material";
-import type React from "react";
+import {Box, Paper, Typography, useTheme} from "@mui/material";
 import {APTCurrencyValue} from "../../../../components/IndividualPageContent/ContentValue/CurrencyValue";
 import GasValue from "../../../../components/IndividualPageContent/ContentValue/GasValue";
-import GeneralTableBody from "../../../../components/Table/GeneralTableBody";
-import GeneralTableCell from "../../../../components/Table/GeneralTableCell";
-import GeneralTableRow from "../../../../components/Table/GeneralTableRow";
+import {
+  ResponsiveKeyValueRow,
+  ResponsiveKeyValueTable,
+} from "../../../../components/Table/ResponsiveKeyValueTable";
 
 /** Module event type emitted with transaction fee breakdown (Aptos Framework). */
 export const FEE_STATEMENT_EVENT_TYPE =
@@ -47,48 +47,6 @@ function isFeeStatementShape(data: unknown): data is Record<string, unknown> {
 
 function gasUnitsToOctas(gasUnits: string, gasUnitPrice: string): string {
   return (BigInt(gasUnits) * BigInt(gasUnitPrice)).toString();
-}
-
-type FeeRowProps = {
-  label: string;
-  children: React.ReactNode;
-  description?: string;
-};
-
-function FeeRow({label, children, description}: FeeRowProps) {
-  const theme = useTheme();
-  return (
-    <GeneralTableRow>
-      <GeneralTableCell
-        component="th"
-        scope="row"
-        sx={{
-          verticalAlign: "top",
-          fontWeight: 600,
-          color: "text.primary",
-          width: "38%",
-        }}
-      >
-        {label}
-        {description ? (
-          <Typography
-            component="div"
-            variant="caption"
-            sx={{
-              display: "block",
-              color: theme.palette.text.secondary,
-              mt: 0.5,
-            }}
-          >
-            {description}
-          </Typography>
-        ) : null}
-      </GeneralTableCell>
-      <GeneralTableCell sx={{verticalAlign: "top"}}>
-        {children}
-      </GeneralTableCell>
-    </GeneralTableRow>
-  );
 }
 
 function GasUnitsWithOptionalApt({
@@ -135,6 +93,13 @@ function OctasRowValue({octas}: {octas: string}) {
   );
 }
 
+const extraValueTypography = {
+  m: 0,
+  whiteSpace: "pre-wrap",
+  wordBreak: "break-word",
+  fontFamily: "monospace",
+} as const;
+
 type FeeStatementEventViewProps = {
   data: Record<string, unknown>;
   /** When set (user transactions), gas rows also show an APT estimate at this price. */
@@ -152,71 +117,52 @@ export default function FeeStatementEventView({
     ([key]) => !KNOWN_FIELD_ORDER.includes(key as KnownField),
   );
 
+  const knownNodes = KNOWN_FIELD_ORDER.map((key) => {
+    const raw = data[key];
+    if (!isUIntString(raw)) {
+      return null;
+    }
+    const label = FIELD_LABELS[key];
+    if (key === "storage_fee_octas" || key === "storage_fee_refund_octas") {
+      const description =
+        key === "storage_fee_refund_octas"
+          ? "Credited when storage is released; not part of gas_used."
+          : "Charged for net new state; priced in octas.";
+      return (
+        <ResponsiveKeyValueRow
+          key={key}
+          label={label}
+          description={description}
+        >
+          <OctasRowValue octas={raw} />
+        </ResponsiveKeyValueRow>
+      );
+    }
+    const description =
+      key === "total_charge_gas_units"
+        ? "Sum of execution, I/O, and storage (as gas units). Matches gas_used on the transaction."
+        : undefined;
+    return (
+      <ResponsiveKeyValueRow key={key} label={label} description={description}>
+        <GasUnitsWithOptionalApt gasUnits={raw} gasUnitPrice={gasUnitPrice} />
+      </ResponsiveKeyValueRow>
+    );
+  });
+
+  const extraNodes = extraEntries.map(([key, value]) => (
+    <ResponsiveKeyValueRow key={key} label={key}>
+      <Typography component="pre" variant="body2" sx={extraValueTypography}>
+        {typeof value === "string" ? value : JSON.stringify(value, null, 2)}
+      </Typography>
+    </ResponsiveKeyValueRow>
+  ));
+
   return (
-    <Paper variant="outlined" sx={{overflow: "hidden"}}>
-      <Table size="small" sx={{tableLayout: "fixed"}}>
-        <GeneralTableBody>
-          {KNOWN_FIELD_ORDER.map((key) => {
-            const raw = data[key];
-            if (!isUIntString(raw)) {
-              return null;
-            }
-            const label = FIELD_LABELS[key];
-            if (
-              key === "storage_fee_octas" ||
-              key === "storage_fee_refund_octas"
-            ) {
-              return (
-                <FeeRow
-                  key={key}
-                  label={label}
-                  description={
-                    key === "storage_fee_refund_octas"
-                      ? "Credited when storage is released; not part of gas_used."
-                      : "Charged for net new state; priced in octas."
-                  }
-                >
-                  <OctasRowValue octas={raw} />
-                </FeeRow>
-              );
-            }
-            return (
-              <FeeRow
-                key={key}
-                label={label}
-                description={
-                  key === "total_charge_gas_units"
-                    ? "Sum of execution, I/O, and storage (as gas units). Matches gas_used on the transaction."
-                    : undefined
-                }
-              >
-                <GasUnitsWithOptionalApt
-                  gasUnits={raw}
-                  gasUnitPrice={gasUnitPrice}
-                />
-              </FeeRow>
-            );
-          })}
-          {extraEntries.map(([key, value]) => (
-            <FeeRow key={key} label={key}>
-              <Typography
-                component="pre"
-                variant="body2"
-                sx={{
-                  m: 0,
-                  whiteSpace: "pre-wrap",
-                  wordBreak: "break-word",
-                  fontFamily: "monospace",
-                }}
-              >
-                {typeof value === "string"
-                  ? value
-                  : JSON.stringify(value, null, 2)}
-              </Typography>
-            </FeeRow>
-          ))}
-        </GeneralTableBody>
-      </Table>
+    <Paper variant="outlined" sx={{overflow: "hidden", maxWidth: "100%"}}>
+      <ResponsiveKeyValueTable size="small" tableLayout="fixed">
+        {knownNodes}
+        {extraNodes}
+      </ResponsiveKeyValueTable>
     </Paper>
   );
 }
