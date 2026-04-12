@@ -5,6 +5,8 @@
  * unit tested without mounting the TanStack Router.
  */
 
+import {allowsCustomNetworkForLocalExplorer} from "./walletNetwork";
+
 export type EntityRedirectResult =
   | {kind: "tab"; tab: string; search: Record<string, string>}
   | {kind: "modules"; search: Record<string, string>}
@@ -114,11 +116,22 @@ export function shouldBlockWalletSubmission(
   walletNetworkName: string | undefined,
   explorerNetworkName: string,
   walletName: string | undefined,
+  walletRpcUrl?: string,
 ): boolean {
   if (walletName === "Google (AptosConnect)") {
     return false;
   }
-  return walletNetworkName?.toLocaleLowerCase() !== explorerNetworkName;
+  if (
+    allowsCustomNetworkForLocalExplorer(
+      walletName,
+      walletNetworkName,
+      walletRpcUrl,
+      explorerNetworkName,
+    )
+  ) {
+    return false;
+  }
+  return walletNetworkName?.toLowerCase() !== explorerNetworkName.toLowerCase();
 }
 
 export type PortfolioProvider = "lightscan" | "yieldai";
