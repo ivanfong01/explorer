@@ -1,6 +1,10 @@
 import type {Types} from "~/types/aptos";
 import {DECIBEL_CONTRACTS} from "./constants";
 import type {
+  BulkOrderLeg,
+  DecibelBulkOrderDetail,
+  DecibelBulkOrderFilledEvent,
+  DecibelBulkOrderPlacedEvent,
   DecibelDeposit,
   DecibelOrder,
   DecibelTransactionSummary,
@@ -246,18 +250,156 @@ function parsePayloadAction(
   return undefined;
 }
 
+function zipLegs(prices: unknown, sizes: unknown): BulkOrderLeg[] {
+  const p = Array.isArray(prices) ? prices : [];
+  const s = Array.isArray(sizes) ? sizes : [];
+  const len = Math.min(p.length, s.length);
+  const legs: BulkOrderLeg[] = [];
+  for (let i = 0; i < len; i++) {
+    legs.push({
+      price: String(p[i]),
+      size: String(s[i]),
+    });
+  }
+  return legs;
+}
+
+function extractOptionValue(val: unknown): string | undefined {
+  if (typeof val === "object" && val !== null && "vec" in val) {
+    const vec = (val as {vec: unknown[]}).vec;
+    if (vec.length > 0) return String(vec[0]);
+    return undefined;
+  }
+  if (typeof val === "string") return val;
+  return undefined;
+}
+
+function parseBulkOrderPayloadDetail(
+  transaction: Types.Transaction,
+): DecibelBulkOrderDetail | undefined {
+  if (
+    !("payload" in transaction) ||
+    !("success" in transaction) ||
+    !transaction.success
+  ) {
+    return undefined;
+  }
+
+  const payload = transaction.payload;
+  if (
+    payload.type !== "entry_function_payload" ||
+    !("function" in payload) ||
+    !("arguments" in payload)
+  ) {
+    return undefined;
+  }
+
+  const typedPayload = payload as Types.TransactionPayload_EntryFunctionPayload;
+  const fn = typedPayload.function;
+  const args = typedPayload.arguments;
+
+  const matchesDecibel = DECIBEL_CONTRACTS.some((addr) =>
+    fn.startsWith(`${addr}::dex_accounts_entry::`),
+  );
+  if (!matchesDecibel) return undefined;
+
+  const fnName = fn.split("::").pop() ?? "";
+  if (fnName !== "place_bulk_orders_to_subaccount") return undefined;
+
+  // API args (signer stripped): [subaccount(0), market(1), sequence_number(2),
+  //   bid_prices(3), bid_sizes(4), ask_prices(5), ask_sizes(6),
+  //   builder_address(7), builder_fees(8)]
+  if (args.length < 7) return undefined;
+
+  const builderAddr = args.length > 7 ? extractOptionValue(args[7]) : undefined;
+  const builderFee = args.length > 8 ? extractOptionValue(args[8]) : undefined;
+
+  return {
+    market: extractObjectInner(args[1]),
+    subaccount: extractObjectInner(args[0]),
+    sequenceNumber: args[2] != null ? String(args[2]) : undefined,
+    bids: zipLegs(args[3], args[4]),
+    asks: zipLegs(args[5], args[6]),
+    builderAddress:
+      builderAddr && builderAddr !== "0x0" ? builderAddr : undefined,
+    builderFees: builderFee && builderFee !== "0" ? builderFee : undefined,
+  };
+}
+
+function parseBulkOrderPlacedEvent(
+  event: Types.Event,
+): DecibelBulkOrderPlacedEvent | undefined {
+  const isMatch = DECIBEL_CONTRACTS.some(
+    (addr) => event.type === `${addr}::market_types::BulkOrderPlacedEvent`,
+  );
+  if (!isMatch) return undefined;
+
+  const data = event.data as Record<string, unknown>;
+  return {
+    market: String(data.market ?? ""),
+    orderId: String(data.order_id ?? ""),
+    user: String(data.user ?? ""),
+    sequenceNumber: String(data.sequence_number ?? ""),
+    previousSeqNum:
+      data.previous_seq_num !== undefined
+        ? String(data.previous_seq_num)
+        : undefined,
+    bids: zipLegs(data.bid_prices, data.bid_sizes),
+    asks: zipLegs(data.ask_prices, data.ask_sizes),
+    cancelledBids: zipLegs(data.cancelled_bid_prices, data.cancelled_bid_sizes),
+    cancelledAsks: zipLegs(data.cancelled_ask_prices, data.cancelled_ask_sizes),
+  };
+}
+
+function parseBulkOrderFilledEvent(
+  event: Types.Event,
+): DecibelBulkOrderFilledEvent | undefined {
+  const isMatch = DECIBEL_CONTRACTS.some(
+    (addr) => event.type === `${addr}::market_types::BulkOrderFilledEvent`,
+  );
+  if (!isMatch) return undefined;
+
+  const data = event.data as Record<string, unknown>;
+  return {
+    market: String(data.market ?? ""),
+    orderId: String(data.order_id ?? ""),
+    user: String(data.user ?? ""),
+    fillId: String(data.fill_id ?? ""),
+    side: data.is_bid === true ? "buy" : "sell",
+    price: String(data.price ?? ""),
+    origPrice: data.orig_price != null ? String(data.orig_price) : undefined,
+    filledSize: String(data.filled_size ?? ""),
+  };
+}
+
 export function parseDecibelTransaction(
   transaction: Types.Transaction,
 ): DecibelTransactionSummary {
   const orders: DecibelOrder[] = [];
   const deposits: DecibelDeposit[] = [];
   const withdrawals: DecibelWithdraw[] = [];
+  const bulkOrderPlacedEvents: DecibelBulkOrderPlacedEvent[] = [];
+  const bulkOrderFilledEvents: DecibelBulkOrderFilledEvent[] = [];
 
-  // Parse events for order data
+  // Parse events for order data and bulk-specific events
   if ("events" in transaction && Array.isArray(transaction.events)) {
     for (const event of transaction.events) {
       const order = parseOrderEvent(event);
-      if (order) orders.push(order);
+      if (order) {
+        orders.push(order);
+        continue;
+      }
+
+      const placed = parseBulkOrderPlacedEvent(event);
+      if (placed) {
+        bulkOrderPlacedEvents.push(placed);
+        continue;
+      }
+
+      const filled = parseBulkOrderFilledEvent(event);
+      if (filled) {
+        bulkOrderFilledEvents.push(filled);
+      }
     }
   }
 
@@ -288,5 +430,15 @@ export function parseDecibelTransaction(
     }
   }
 
-  return {orders, deposits, withdrawals};
+  // Parse bulk order detail from payload arguments
+  const bulkOrderDetail = parseBulkOrderPayloadDetail(transaction);
+
+  return {
+    orders,
+    deposits,
+    withdrawals,
+    bulkOrderDetail,
+    bulkOrderPlacedEvents,
+    bulkOrderFilledEvents,
+  };
 }
